@@ -8,7 +8,7 @@ output.
 The following example creates a logger facility with one required field, i.e.,
 a field that will be printed in all messages.
 
-```
+```rust
 extern crate logger;
 
 use logger::Logger;
@@ -27,7 +27,7 @@ fn main() {
 
 This will output the following:
 
-```
+```bash
 2021-12-24 12:17:03.346260 -03:00	INFO	Starting	{"name":"alert"}
 2021-12-24 12:17:03.346952 -03:00	DEBUG	Just a debug message	{"name":"alert","level":"critical"}
 
