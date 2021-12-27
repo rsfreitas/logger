@@ -11,6 +11,7 @@ use std::collections::HashMap;
 
 /// Logger is an interface that allows printing structured log messages into
 /// the standard output.
+#[derive(Debug)]
 pub struct Logger {
     builder: LoggerBuilder,
 }
