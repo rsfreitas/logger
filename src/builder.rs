@@ -6,6 +6,9 @@ use crate::Logger;
 pub struct LoggerBuilder {
     pub(crate) env: Environment,
     pub(crate) required_fields: RequiredFields,
+
+    ts_second_name: Option<String>,
+    ts_millisecond_name: Option<String>,
 }
 
 #[derive(Clone)]
@@ -18,11 +21,16 @@ pub enum Environment {
 
 /// Allows building a Logger interface using custom options.
 impl LoggerBuilder {
+    const TIMESTAMP_SECOND_FIELD_NAME: &'static str = "local.ts";
+    const TIMESTAMP_MILLISECOND_FIELD_NAME: &'static str = "local.ts_ms";
+
     /// Creates a new LoggerBuilder object.
     pub fn new() -> Self {
         LoggerBuilder {
             env: Environment::Local,
             required_fields: RequiredFields::default(),
+            ts_second_name: None,
+            ts_millisecond_name: None,
         }
     }
 
@@ -50,14 +58,28 @@ impl LoggerBuilder {
         self
     }
 
+    /// Changes the default log environment.
+    pub fn with_env(&mut self, env: Environment) -> &mut Self {
+        self.env = env;
+        self
+    }
+
     /// Adds a fixed field for all printed message.
-    pub fn with_fielf(&mut self, key: &str, value: FieldValue) -> &mut Self {
+    pub fn with_field(&mut self, key: &str, value: FieldValue) -> &mut Self {
         self.required_fields.add(key, value);
         self
     }
 
+    /// Changes the names of timestamp fields that are appended into each
+    /// log message.
+    pub fn with_timestamp_field_name(&mut self, second: &str, millisecond: &str) -> &mut Self {
+        self.ts_second_name = Some(second.to_string());
+        self.ts_millisecond_name = Some(millisecond.to_string());
+        self
+    }
+
     /// Builds a Logger object with all defined options.
-    pub fn build(self) -> Logger {
+    pub fn build(&self) -> Logger {
         Logger::new(self)
     }
 
@@ -67,6 +89,20 @@ impl LoggerBuilder {
 
     pub(crate) fn show_debug(&self) -> bool {
         matches!(self.env, Environment::Test | Environment::Local)
+    }
+
+    pub(crate) fn timestamp_second_field_name(&self) -> &str {
+        match &self.ts_second_name {
+            None => LoggerBuilder::TIMESTAMP_SECOND_FIELD_NAME,
+            Some(s) => s,
+        }
+    }
+
+    pub(crate) fn timestamp_millisecond_field_name(&self) -> &str {
+        match &self.ts_millisecond_name {
+            None => LoggerBuilder::TIMESTAMP_MILLISECOND_FIELD_NAME,
+            Some(s) => s,
+        }
     }
 }
 

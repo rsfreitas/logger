@@ -5,14 +5,13 @@ pub mod builder;
 pub mod fields;
 
 use crate::builder::LoggerBuilder;
-use crate::fields::{FieldValue, RequiredFields};
+use crate::fields::FieldValue;
 use colored::Colorize;
 use std::collections::HashMap;
 
 /// Logger is an interface that allows printing structured log messages into
 /// the standard output.
 pub struct Logger {
-    required_fields: RequiredFields,
     builder: LoggerBuilder,
 }
 
@@ -20,13 +19,11 @@ pub struct Logger {
 /// the standard output.
 impl Logger {
     /// Creates a new Logger facility allowing call the log API using it.
-    /// Every message printed with a logger interface will have all RequiredFields
-    /// in it as well as the local timestamp (the "local.ts" field with seconds
-    /// and "local.ts_ms" with timestamp's milliseconds).
-    pub(crate) fn new(builder: LoggerBuilder) -> Self {
+    /// Every message printed with a logger interface will have all builder
+    /// defined key-value fields as well as the local timestamp.
+    pub(crate) fn new(builder: &LoggerBuilder) -> Self {
         Logger {
-            required_fields: RequiredFields::default(),
-            builder,
+            builder: builder.to_owned(),
         }
     }
 
@@ -89,13 +86,16 @@ impl Logger {
         color: colored::Color,
         fields: Option<HashMap<String, FieldValue>>,
     ) {
-        let mut msg_fields = self.required_fields.data();
+        let mut msg_fields = self.builder.required_fields.data();
         let now = chrono::offset::Local::now();
 
         // Adds fields that (may) change with each message.
-        msg_fields.insert("local.ts".to_string(), FieldValue::Number(now.timestamp()));
         msg_fields.insert(
-            "local.ts_ms".to_string(),
+            self.builder.timestamp_second_field_name().to_string(),
+            FieldValue::Number(now.timestamp()),
+        );
+        msg_fields.insert(
+            self.builder.timestamp_millisecond_field_name().to_string(),
             FieldValue::Number(now.timestamp_millis()),
         );
 
@@ -136,6 +136,18 @@ mod tests {
     #[test]
     pub fn test_new_logger() {
         let log = LoggerBuilder::default().build();
+
+        log.info("Hello world!");
+        log.debug("Hello world!");
+        log.error("Hello world!");
+        log.warn("Hello world!");
+    }
+
+    #[test]
+    pub fn test_new_logger_with_fields() {
+        let log = LoggerBuilder::default()
+            .with_field("name", FieldValue::String("example".to_string()))
+            .build();
 
         log.info("Hello world!");
         log.debug("Hello world!");

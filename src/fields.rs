@@ -7,7 +7,7 @@ pub struct RequiredFields {
     fields: HashMap<String, FieldValue>,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 #[serde(untagged)]
 pub enum FieldValue {
     Number(i64),
