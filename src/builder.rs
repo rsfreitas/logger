@@ -2,7 +2,7 @@ use crate::fields::{FieldValue, RequiredFields};
 use crate::Logger;
 
 /// Allows building a Logger interface using custom options.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct LoggerBuilder {
     pub(crate) env: Environment,
     pub(crate) required_fields: RequiredFields,
@@ -11,7 +11,7 @@ pub struct LoggerBuilder {
     ts_millisecond_name: Option<String>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Environment {
     Local,
     Test,
