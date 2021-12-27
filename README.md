@@ -11,12 +11,13 @@ a field that will be printed in all messages.
 ```rust
 extern crate logger;
 
-use logger::Logger;
-use logger::fields::{FieldValue, RequiredFields};
+use logger::builder::LoggerBuilder;
+use logger::fields::FieldValue;
 
 fn main() {
-    let log = Logger::new(RequiredFields::new().
-                          add("name", FieldValue::String("alert".to_string())));
+    let log = LoggerBuilder::default()
+        .with_field("name", FieldValue::String("alert".to_string()))
+        .build();
 
     log.info("Starting");
     log.debugf("Just a debug message", logger::fields!{
