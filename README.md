@@ -29,7 +29,19 @@ fn main() {
 This will output the following:
 
 ```bash
-2021-12-24 12:17:03.346260 -03:00	INFO	Starting	{"name":"alert"}
-2021-12-24 12:17:03.346952 -03:00	DEBUG	Just a debug message	{"name":"alert","level":"critical"}
+2021-12-27 11:56:28.282117 -03:00	INFO	Starting	{"name":"alert","local.ts":1640616988,"local.ts_ms":1640616988282}
+2021-12-27 11:56:28.283648 -03:00	DEBUG	Just a debug message	{"name":"alert","local.ts":1640616988,"local.ts_ms":1640616988283,"level":"critical"
+```
 
+## Features
+
+Logger supports categorizing messages in some levels. Also, when choosing `Local`
+or `Test` environments, it uses different colors on the level information.
+
+The current supported levels (and their terminal colors) are the following:
+
+* Debug (green)
+* Info (blue)
+* Warning (warning)
+* Error (red)
 
