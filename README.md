@@ -42,6 +42,6 @@ The current supported levels (and their terminal colors) are the following:
 
 * Debug (green)
 * Info (blue)
-* Warning (warning)
+* Warning (yellow)
 * Error (red)
 
