@@ -1,4 +1,3 @@
-
 use std::collections::HashMap;
 
 use serde::Serialize;
@@ -11,13 +10,13 @@ pub struct RequiredFields {
 #[derive(Serialize, Clone)]
 #[serde(untagged)]
 pub enum FieldValue {
-    Number(i32),
+    Number(i64),
     String(String),
 }
 
 impl RequiredFields {
     pub fn new() -> Self {
-        RequiredFields{
+        RequiredFields {
             fields: HashMap::new(),
         }
     }
@@ -32,9 +31,8 @@ impl RequiredFields {
     }
 }
 
-#[derive(Serialize)]
-pub struct Field {
-    pub name: String,
-    pub value: String,
+impl Default for RequiredFields {
+    fn default() -> Self {
+        Self::new()
+    }
 }
-

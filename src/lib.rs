@@ -1,76 +1,124 @@
-
 extern crate chrono;
 extern crate colored;
 
+pub mod builder;
 pub mod fields;
 
-use std::collections::HashMap;
-use colored::Colorize;
+use crate::builder::LoggerBuilder;
 use crate::fields::{FieldValue, RequiredFields};
+use colored::Colorize;
+use std::collections::HashMap;
 
+/// Logger is an interface that allows printing structured log messages into
+/// the standard output.
 pub struct Logger {
     required_fields: RequiredFields,
+    builder: LoggerBuilder,
 }
 
 /// Logger is an interface that allows printing structured log messages into
 /// the standard output.
 impl Logger {
-    /// new creates a new Logger facility allowing call the log API using it.
-    /// It requires a RequiredFields struct that gathers information to be
-    /// used at all messages.
-    pub fn new(fields: &mut RequiredFields) -> Self {
-        Logger{
-            required_fields: fields.to_owned(),
+    /// Creates a new Logger facility allowing call the log API using it.
+    /// Every message printed with a logger interface will have all RequiredFields
+    /// in it as well as the local timestamp (the "local.ts" field with seconds
+    /// and "local.ts_ms" with timestamp's milliseconds).
+    pub(crate) fn new(builder: LoggerBuilder) -> Self {
+        Logger {
+            required_fields: RequiredFields::default(),
+            builder,
         }
     }
 
+    /// Prints a message into the standard output using the information
+    /// level.
     pub fn info(&self, msg: &str) {
         self.print(msg, "INFO", colored::Color::Blue, None)
     }
 
+    /// Prints a message into the standard output using the information
+    /// level supporting the addition of fields, of key-value kind, into it.
     pub fn infof(&self, msg: &str, fields: HashMap<String, FieldValue>) {
         self.print(msg, "INFO", colored::Color::Blue, Some(fields))
     }
 
+    /// Prints a message into the standard output using the error
+    /// level.
     pub fn error(&self, msg: &str) {
         self.print(msg, "ERROR", colored::Color::Red, None)
     }
 
+    /// Prints a message into the standard output using the error level
+    /// supporting the addition of fields, of key-value kind, into it.
     pub fn errorf(&self, msg: &str, fields: HashMap<String, FieldValue>) {
         self.print(msg, "ERROR", colored::Color::Red, Some(fields))
     }
 
+    /// Prints a message into the standard output using the debug
+    /// level.
     pub fn debug(&self, msg: &str) {
-        self.print(msg, "DEBUG", colored::Color::Green, None)
+        if self.builder.show_debug() {
+            self.print(msg, "DEBUG", colored::Color::Green, None)
+        }
     }
 
+    /// Prints a message into the standard output using the debug level
+    /// supporting the addition of fields, of key-value kind, into it.
     pub fn debugf(&self, msg: &str, fields: HashMap<String, FieldValue>) {
-        self.print(msg, "DEBUG", colored::Color::Green, Some(fields))
+        if self.builder.show_debug() {
+            self.print(msg, "DEBUG", colored::Color::Green, Some(fields))
+        }
     }
 
+    /// Prints a message into the standard output using the warning
+    /// level.
     pub fn warn(&self, msg: &str) {
         self.print(msg, "WARN", colored::Color::Yellow, None)
     }
 
+    /// Prints a message into the standard output using the warning level
+    /// supporting the addition of fields, of key-value kind, into it.
     pub fn warnf(&self, msg: &str, fields: HashMap<String, FieldValue>) {
         self.print(msg, "WARN", colored::Color::Yellow, Some(fields))
     }
 
-    fn print(&self, msg: &str, str_level: &str, color: colored::Color, fields: Option<HashMap<String, FieldValue>>) {
+    fn print(
+        &self,
+        msg: &str,
+        str_level: &str,
+        color: colored::Color,
+        fields: Option<HashMap<String, FieldValue>>,
+    ) {
         let mut msg_fields = self.required_fields.data();
+        let now = chrono::offset::Local::now();
+
+        // Adds fields that (may) change with each message.
+        msg_fields.insert("local.ts".to_string(), FieldValue::Number(now.timestamp()));
+        msg_fields.insert(
+            "local.ts_ms".to_string(),
+            FieldValue::Number(now.timestamp_millis()),
+        );
 
         // Appends user fields into the message required fields to be printed.
         if let Some(arg_fields) = fields {
             msg_fields.extend(arg_fields)
         }
 
-        println!("{}\t{}\t{}\t{}", chrono::offset::Local::now().to_string(),
-                                   str_level.color(color),
-                                   msg,
-                                   serde_json::to_string(&msg_fields).expect("could not parse required fields"));
+        println!(
+            "{}\t{}\t{}\t{}",
+            now.to_string(),
+            match self.builder.has_color() {
+                true => str_level.color(color),
+                false => str_level.clear(),
+            },
+            msg,
+            serde_json::to_string(&msg_fields).expect("could not parse required fields")
+        );
     }
 }
 
+/// This macros allows creating one or more key-value fields to be added into
+/// a log message.
 #[macro_export]
 macro_rules! fields {
     ($($k:expr => $v:expr),* $(,)?) => {
@@ -87,8 +135,7 @@ mod tests {
 
     #[test]
     pub fn test_new_logger() {
-        let log = Logger::new(RequiredFields::new()
-                              .add("key", FieldValue::String("value".to_string())));
+        let log = LoggerBuilder::default().build();
 
         log.info("Hello world!");
         log.debug("Hello world!");
@@ -97,15 +144,11 @@ mod tests {
     }
 
     #[test]
-    pub fn test_log_with_empty_messages() {
-    }
+    pub fn test_log_with_empty_messages() {}
 
     #[test]
-    pub fn test_log_with_fields() {
-    }
+    pub fn test_log_with_fields() {}
 
     #[test]
-    pub fn test_log_successful() {
-    }
+    pub fn test_log_successful() {}
 }
-
